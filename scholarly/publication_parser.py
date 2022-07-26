@@ -7,11 +7,11 @@ from .data_types import BibEntry, Mandate, Publication, PublicationSource
 
 _SCHOLARPUBRE = r'cites=([\d,]*)'
 _CITATIONPUB = '/citations?hl=en&view_op=view_citation&citation_for_view={0}'
-_SCHOLARPUB = '/scholar?hl=en&num=20&oi=bibs&cites={0}'
+_SCHOLARPUB = '/scholar?hl=en&oi=bibs&cites={0}'
 _CITATIONPUBRE = r'citation_for_view=([\w-]*:[\w-]*)'
-_BIBCITE = '/scholar?hl=en&num=20&q=info:{0}:scholar.google.com/\
+_BIBCITE = '/scholar?hl=en&q=info:{0}:scholar.google.com/\
 &output=cite&scirp={1}&hl=en'
-_CITEDBYLINK = '/scholar?hl=en&num=20&cites={0}'
+_CITEDBYLINK = '/scholar?hl=en&cites={0}'
 _MANDATES_URL = '/citations?view_op=view_mandate&hl=en&citation_for_view={0}'
 
 _BIB_MAPPING = {
@@ -46,12 +46,12 @@ class _SearchScholarIterator(object):
     I have removed all logging from here for simplicity. -V
     """
 
-    def __init__(self, nav, url: str):
+    def __init__(self, nav, url: str, limit: int):
         self._url = url
         self._pubtype = PublicationSource.PUBLICATION_SEARCH_SNIPPET if "/scholar?" in url else PublicationSource.JOURNAL_CITATION_LIST
         self._nav = nav
         self._load_url(url)
-        self.total_results = self._get_total_results()
+        self.total_results = self._get_total_results(limit)
         self.pub_parser = PublicationParser(self._nav)
 
     def _load_url(self, url: str):
@@ -60,11 +60,11 @@ class _SearchScholarIterator(object):
         self._pos = 0
         self._rows = self._soup.find_all('div', class_='gs_r gs_or gs_scl') + self._soup.find_all('div', class_='gsc_mpat_ttl')
 
-    def _get_total_results(self):
+    def _get_total_results(self, limit):
         if self._soup.find("div", class_="gs_pda"):
             return None
 
-        for x in self._soup.find_all('div', class_='gs_ab_mdw'):
+        for x in self._soup.find_all('div', class_='gs_ab_mdw', limit=limit):
             # Accounting for different thousands separators:
             # comma, dot, space, apostrophe
             match = re.match(pattern=r'(^|\s*About)\s*([0-9,\.\s’]+)', string=x.text)

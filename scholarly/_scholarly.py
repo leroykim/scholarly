@@ -15,8 +15,8 @@ from .data_types import Author, AuthorSource, Journal, Publication, PublicationS
 _AUTHSEARCH = '/citations?hl=en&view_op=search_authors&mauthors={0}'
 _KEYWORDSEARCH = '/citations?hl=en&view_op=search_authors&mauthors=label:{0}'
 _KEYWORDSEARCHBASE = '/citations?hl=en&view_op=search_authors&mauthors={}'
-_PUBSEARCH = '/scholar?hl=en&num=20&q={0}'
-_CITEDBYSEARCH = '/scholar?hl=en&num=20&cites={0}'
+_PUBSEARCH = '/scholar?hl=en&q={0}'
+_CITEDBYSEARCH = '/scholar?hl=en&cites={0}'
 _ORGSEARCH = "/citations?view_op=view_org&hl=en&org={0}"
 _MANDATES_URL = "https://scholar.google.com/citations?view_op=mandates_leaderboard_csv&hl=en"
 
@@ -30,6 +30,7 @@ class _Scholarly:
         self.__nav = Navigator()
         self.logger = self.__nav.logger
         self._journal_categories = None
+        self.limit = None
 
     @property
     def journal_categories(self):
@@ -45,6 +46,9 @@ class _Scholarly:
         """
 
         return self.__nav._set_retries(num_retries)
+
+    def set_limit(self, limit):
+        self.limit = limit
 
     def use_proxy(self, proxy_generator: ProxyGenerator,
                   secondary_proxy_generator: ProxyGenerator = None) -> None:
@@ -153,7 +157,7 @@ class _Scholarly:
         url = self._construct_url(_PUBSEARCH.format(requests.utils.quote(query)), patents=patents,
                                   citations=citations, year_low=year_low, year_high=year_high,
                                   sort_by=sort_by, include_last_year=include_last_year, start_index=start_index)
-        return self.__nav.search_publications(url)
+        return self.__nav.search_publications(url, self.limit)
 
     def search_citedby(self, publication_id: int, **kwargs):
         """Searches by Google Scholar publication id and returns a generator of Publication objects.
